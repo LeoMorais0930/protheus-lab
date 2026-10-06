@@ -1,0 +1,123 @@
+name: protheus-lab
+
+x-runtime: &runtime
+  restart: "no"
+  init: true
+  stop_grace_period: 60s
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+x-totvs-limits: &totvs-limits
+  nofile:
+    soft: 65536
+    hard: 65536
+  stack:
+    soft: 1048576
+    hard: 1048576
+  # These TOTVS debug builds require an unlimited core-size ulimit.
+  core: -1
+
+services:
+  db:
+    <<: *runtime
+    image: feliperaposo/protheus-postgresql:16@sha256:3b81f8d080b4a16b1bae1a1bc09bb5ac0eaab3ae98254fe6a8e4b9aa08aba6bf
+    mem_limit: 768m
+    cpus: 1.0
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      PROTHEUS_DB: protheus
+      PROTHEUS_USER: protheus
+      PROTHEUS_PASSWORD: ${PROTHEUS_PASSWORD:?Set PROTHEUS_PASSWORD in .env}
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=40", "-c", "work_mem=4MB", "-c", "maintenance_work_mem=64MB"]
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      lab:
+        aliases: [postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d protheus && psql -U postgres -d protheus -Atqc 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  license:
+    <<: *runtime
+    image: feliperaposo/protheus-license:3.7.0@sha256:baa07478809fa5aa08f8300ff190b845e781fca559783119c209770bdd63f612
+    mem_limit: 512m
+    cpus: 1.0
+    ulimits: *totvs-limits
+    ports:
+      - "127.0.0.1:8081:1234"
+    volumes:
+      - license_files:/protheus12
+    networks:
+      lab:
+        aliases: [license-server]
+
+  dbaccess:
+    <<: *runtime
+    image: feliperaposo/protheus-dbaccess:24.1.1.1@sha256:353e8120292f2e8e9bd3059fe250b63f8d2a14f305b570bded4882e4a68ac663
+    mem_limit: 256m
+    cpus: 1.0
+    ulimits: *totvs-limits
+    environment:
+      PROTHEUS_DB: protheus
+      PROTHEUS_USER: protheus
+      PROTHEUS_PASSWORD: ${PROTHEUS_PASSWORD:?Set PROTHEUS_PASSWORD in .env}
+    networks: [lab]
+    depends_on:
+      db:
+        condition: service_healthy
+      license:
+        condition: service_started
+
+  protheus:
+    <<: *runtime
+    image: feliperaposo/protheus:p12.1.2510@sha256:8064c45e687e4282d34c6e826e49c6e14408e3a1300f6a2317600873558ab79e
+    mem_limit: 3g
+    cpus: 2.0
+    ulimits: *totvs-limits
+    environment:
+      APPSERVER_DATABASE: POSTGRES
+    # Extract synchronously and leave ERP REST jobs disabled before first login.
+    # The full /protheus12 volume preserves RPO, data and configuration.
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        export LC_ALL=C
+        export LD_LIBRARY_PATH=.
+        if test -f /protheus12/protheus_data/systemload.tar.xz; then
+          tar -xJf /protheus12/protheus_data/systemload.tar.xz -C /protheus12/protheus_data
+          rm /protheus12/protheus_data/systemload.tar.xz
+        fi
+        if test -f /protheus12/bin/appserver.tar.xz; then
+          tar -xJf /protheus12/bin/appserver.tar.xz -C /protheus12/bin
+          rm /protheus12/bin/appserver.tar.xz
+        fi
+        cd /protheus12/bin/appserver
+        sed -i 's/{{APPSERVER_DATABASE}}/POSTGRES/g; /^JOBS=HTTPJOB$/d' appserver.ini
+        exec ./appsrvlinux
+    ports:
+      - "127.0.0.1:1234:1234"
+      - "127.0.0.1:8080:1234"
+    volumes:
+      - protheus_files:/protheus12
+    networks: [lab]
+    depends_on:
+      dbaccess:
+        condition: service_started
+
+networks:
+  lab:
+
+volumes:
+  postgres_data:
+  license_files:
+  protheus_files:

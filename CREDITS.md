@@ -26,6 +26,6 @@ Organização dos estudos por **Leonardo Morais**, com apoio de IA na elaboraç�
 
 As orientações recebidas para o laboratório foram sintetizadas em documentação própria; documentos internos, dados empresariais e credenciais não são publicados.
 
-Não foi identificada uma licença de redistribuição na raiz do checkout original inspecionado. Por isso, este projeto apenas referencia o trabalho do autor e não copia seus arquivos de construção ou artefatos.
+Não foi identificada uma licença de redistribuição na raiz do checkout original inspecionado. Por isso, este projeto referencia o trabalho do autor e fornece uma configuração Compose própria, sem copiar seus arquivos de construção ou redistribuir artefatos.
 
 Binários, imagens e RPOs de terceiros permanecem sujeitos às condições de seus titulares. Créditos não substituem autorização de uso ou redistribuição.

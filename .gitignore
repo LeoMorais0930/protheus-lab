@@ -29,3 +29,8 @@ backups/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Diagnosticos nativos
+core
+core.*
+*.core

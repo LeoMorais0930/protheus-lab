@@ -28,13 +28,13 @@ Este repositório registra a jornada de **Leonardo Morais**, com exemplos e dado
 |---|---|
 | Docker Desktop e WSL2 | Instalados; Docker Engine respondeu à verificação |
 | Projeto de referência | Clonado e inspecionado |
-| Compose com SQL Server | Sintaxe validada; execução ainda não testada |
-| Isolamento das portas e persistência | Ajustes pendentes |
-| Primeiro acesso ao Protheus | Pendente de orientação do responsável pelo laboratório |
+| Compose 2510 + PostgreSQL 16 | Quatro serviços iniciados; consulta ODBC validada |
+| Portas locais e persistência | Portas em loopback e volumes configurados; backup ainda não testado |
+| Primeiro acesso e licenciamento | Pendente de orientação; License Server registrou erros a investigar |
 | Compilação e depuração ADVPL | Ainda não testadas |
 | Rotinas próprias | Planejadas |
 
-**Referência inspecionada:** Protheus **12.1.2310** com SQL Server **2022**. Uma release diferente exige nova conferência de compatibilidade; não basta trocar o nome de uma pasta.
+**Ambiente preparado:** Protheus **12.1.2510** com **PostgreSQL 16**. O checkout original continha Compose da 2310; nossa configuração usa imagens novas inspecionadas e fixadas por digest. O login do ERP ainda não foi validado.
 
 ## Tecnologias
 
@@ -42,8 +42,8 @@ Este repositório registra a jornada de **Leonardo Morais**, com exemplos e dado
 |---|---|
 | Protheus | ERP cujas rotinas e regras serão estudadas |
 | ADVPL / TLPP | Linguagens para desenvolvimento e customização |
-| SQL Server 2022 Developer | Banco escolhido no Compose de referência |
-| PostgreSQL 15 | Alternativa disponível no projeto original |
+| SQL Server 2022 Developer | Alternativa do projeto original; não usada neste laboratório |
+| PostgreSQL 16 | Banco escolhido e iniciado no laboratório |
 | Docker Desktop + Compose | Gerenciamento dos serviços em contêineres |
 | WSL2 | Ambiente Linux utilizado pelo Docker no Windows |
 | AppServer | Execução das rotinas |
@@ -67,7 +67,7 @@ Algumas ferramentas ainda serão configuradas. A tabela descreve a arquitetura p
 
 Créditos a **Felipe Raposo**, autor de [Ambiente Protheus 12 com PostgreSQL ou Microsoft SQL Server](https://bitbucket.org/felipe_raposo/docker-protheus-postgresql-microsoft-sql-server/), referência para a montagem com Docker.
 
-Este repositório contém documentação própria e referências ao projeto original. Não redistribui seus arquivos de construção, imagens, binários ou RPOs da TOTVS. Veja [CREDITS.md](CREDITS.md).
+Este repositório contém documentação própria e referências ao projeto original. Inclui um Compose próprio que referencia as imagens do autor; não redistribui binários ou RPOs da TOTVS. Veja [CREDITS.md](CREDITS.md).
 
 ## Escopo de uso
 

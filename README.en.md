@@ -28,13 +28,13 @@ This repository documents **Leonardo Morais's** learning journey using fictional
 |---|---|
 | Docker Desktop and WSL2 | Installed; Docker Engine responded to verification |
 | Reference project | Cloned and inspected |
-| SQL Server Compose configuration | Syntax validated; runtime not tested yet |
-| Local port bindings and persistence | Adjustments pending |
-| First Protheus login | Pending guidance from the lab's technical contact |
+| Protheus 2510 + PostgreSQL 16 Compose | Four services started; ODBC query verified |
+| Local ports and persistence | Loopback bindings and volumes configured; backup not tested |
+| First login and licensing | Pending guidance; License Server errors need investigation |
 | ADVPL compilation and debugging | Not tested yet |
 | Custom routines | Planned |
 
-**Inspected reference:** Protheus **12.1.2310** with SQL Server **2022**. Using another release requires checking compatibility again; renaming a folder is not enough.
+**Prepared environment:** Protheus **12.1.2510** with **PostgreSQL 16**. The original checkout contains a 2310 Compose configuration; this lab uses newer images inspected and pinned by digest. ERP login has not been validated.
 
 ## Technologies
 
@@ -42,8 +42,8 @@ This repository documents **Leonardo Morais's** learning journey using fictional
 |---|---|
 | Protheus | ERP whose routines and business rules we will study |
 | ADVPL / TLPP | Languages for development and customization |
-| SQL Server 2022 Developer | Database selected in the reference Compose configuration |
-| PostgreSQL 15 | Alternative available in the original project |
+| SQL Server 2022 Developer | Original project alternative; not used in this lab |
+| PostgreSQL 16 | Database selected and started in this lab |
 | Docker Desktop + Compose | Container service management |
 | WSL2 | Linux environment used by Docker on Windows |
 | AppServer | Executes routines |
@@ -69,7 +69,7 @@ The detailed guides below are currently written in Portuguese:
 
 Credit to **Felipe Raposo**, author of [Ambiente Protheus 12 com PostgreSQL ou Microsoft SQL Server](https://bitbucket.org/felipe_raposo/docker-protheus-postgresql-microsoft-sql-server/), the reference for the Docker environment setup.
 
-This repository contains original documentation and references to that project. It does not redistribute its build files, images, TOTVS binaries, or RPOs. See [CREDITS.md](CREDITS.md).
+This repository contains original documentation and references to that project. It includes an original Compose configuration referencing the author's images, without redistributing TOTVS binaries or RPOs. See [CREDITS.md](CREDITS.md).
 
 ## Scope of use
 

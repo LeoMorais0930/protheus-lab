@@ -1,92 +1,87 @@
-# Preparação e operação do laboratório
+# Ambiente local: Protheus 2510 + PostgreSQL 16
 
-## Ponto de partida
+## Estado verificado em 2026-10-06
 
-Docker Desktop com contêineres Linux e backend WSL2. A máquina virtual manual criada anteriormente no Hyper-V não é necessária para este caminho e pode permanecer desligada.
+O Compose da raiz inicia as quatro imagens fixadas por versão e digest. PostgreSQL passou no healthcheck; SELECT 1 funcionou via ODBC dentro do contêiner DBAccess com o usuário da aplicação. O banco usa WIN1252, collation C e ctype pt_BR.CP1252. As portas TCP dos serviços responderam. RPO padrão e arquivos de systemload estão presentes.
 
-O repositório de referência é o [projeto de Felipe Raposo](https://bitbucket.org/felipe_raposo/docker-protheus-postgresql-microsoft-sql-server/).
+Nenhum login no ERP ou compilação ADVPL foi realizado. O License Server iniciou, mas registrou erros de comunicação/liberação e ausência de licenseserverinstall.ini. O acesso funcional à Empresa 99 e o licenciamento ainda precisam de validação com o responsável técnico.
 
-A inspeção foi feita no commit:
+## Versões
 
-```text
-716bd7919ce33541a40e97eb94042218b4815966
-```
-
-A opção examinada está em compose/p12.1.2310-mssql. Ela usa Protheus 12.1.2310 e SQL Server 2022 Developer.
-
-## Verificações antes de iniciar
-
-1. Confirmar a origem, disponibilidade e condições de uso das imagens e componentes.
-2. Restringir todas as portas publicadas ao endereço 127.0.0.1.
-3. Definir armazenamento persistente para banco, configurações e customizações necessárias.
-4. Configurar recursos e inicialização manual, conforme o backend do Docker.
-5. Validar o Compose e combinar as orientações para o primeiro acesso.
-
-O Compose original também solicita /dev/mem e a capacidade sys_rawio. A necessidade e a compatibilidade desses acessos no Docker Desktop ainda precisam ser avaliadas; não adicionar modo privilegiado como solução automática.
-
-**Ainda não há um Compose adaptado e validado para execução neste repositório.** Os comandos abaixo são referência para quando essa preparação estiver concluída.
-
-## Entendendo portas
-
-O mapeamento 127.0.0.1:8080:8080 significa: encaminhar a porta 8080 do próprio computador para a porta 8080 do contêiner.
-
-No Compose original examinado:
-
-| Serviço | Portas publicadas |
+| Serviço | Imagem |
 |---|---|
-| SQL Server | 1433 |
-| License Server | 8081 |
-| DBAccess | 7890 |
-| Protheus | 1234, 8080 e 9995 |
+| Protheus | feliperaposo/protheus:p12.1.2510 |
+| PostgreSQL | feliperaposo/protheus-postgresql:16 |
+| DBAccess | feliperaposo/protheus-dbaccess:24.1.1.1 |
+| License Server | feliperaposo/protheus-license:3.7.0 |
 
-A função de cada endpoint deve ser conferida na configuração efetiva da imagem. A publicação de uma porta não comprova que exista um serviço saudável nela.
+Créditos a [Felipe Raposo](../CREDITS.md). O checkout original tinha Compose da 2310; os arquivos internos das imagens novas foram inspecionados para elaborar esta configuração.
 
-## Comandos do dia a dia
+## Preparar em outra máquina
 
-Execute na pasta do Compose preparado:
+1. Instalar Docker Desktop com backend WSL2.
+2. Copiar `.env.example` para `.env`.
+3. Preencher duas senhas distintas, aleatórias e alfanuméricas. Os scripts das imagens interpolam valores em SQL e sed; esse formato evita caracteres problemáticos.
+4. Executar `docker compose config --quiet`.
+5. Executar `docker compose up -d` e conferir os logs.
+
+O `.env` local é ignorado pelo Git. Não publique esse arquivo nem a saída completa de `docker compose config`, que inclui as senhas resolvidas. Alterar o `.env` após inicializar o banco não muda automaticamente as credenciais existentes.
+
+## Acessos locais
+
+| Uso | Endereço |
+|---|---|
+| WebApp, após orientação do primeiro acesso | http://localhost:8080 |
+| TDS / AppServer | localhost:1234, ambiente P12 |
+| Monitor do License Server | http://localhost:8081 |
+| PostgreSQL | localhost:15432, banco e usuário protheus |
+
+As portas publicadas usam 127.0.0.1. O DBAccess fica apenas na rede interna do Compose. A porta 15432 evita conflito com um banco já existente no computador de montagem.
+
+Na imagem 2510, WebApp e AppServer compartilham a porta interna 1234. A porta 8080 externa aponta para ela. O WebApp do License Server 3.7.0 também usa 1234 internamente.
+
+A senha SQL é PROTHEUS_PASSWORD no `.env`; ela não é uma senha de login do ERP. As imagens novas usam PROTHEUS_DB, PROTHEUS_USER e PROTHEUS_PASSWORD, não os nomes antigos DB_Name, DB_User e DB_Password.
+
+## Recursos sob demanda
+
+| Serviço | Limite de RAM |
+|---|---|
+| PostgreSQL | 768 MiB |
+| License Server | 512 MiB |
+| DBAccess | 256 MiB |
+| AppServer | 3 GiB |
+
+Total: 4,5 GiB de limites, sem contar Docker, kernel, caches e outros programas. Não são reservas fixas nem requisitos oficiais. A amostra inicial dos quatro contêineres sem usuários ficou próxima de 550 MiB; o consumo durante uso ainda não foi medido.
+
+O Compose usa `restart: "no"`. A inicialização do Docker Desktop e os limites globais do WSL não foram alterados. Ao terminar, pare os serviços; Docker e WSL podem manter consumo próprio enquanto ativos.
+
+As imagens TOTVS exigiram core ulimit ilimitado. Isso foi ajustado por contêiner, sem alterar fs.file-max global, habilitar modo privilegiado ou conceder /dev/mem. Eventuais core dumps podem ocupar disco e conter dados; não os publique.
+
+## Operação cotidiana
+
+Na pasta deste repositório:
 
 ```powershell
-# Confere a sintaxe sem iniciar serviços.
-docker compose config --quiet
-
-# Cria/inicia os serviços; pode baixar imagens.
-docker compose up -d
-
-# Mostra o estado dos serviços.
-docker compose ps
-
-# Acompanha os logs. Ctrl+C encerra a visualização.
-docker compose logs -f
-
-# Para mantendo os contêineres.
-docker compose stop
-
-# Retoma os contêineres existentes.
 docker compose start
+docker compose ps
+docker compose logs --tail 50
+docker compose stop
 ```
 
-Não usar docker compose down como rotina até validar toda a persistência: ele remove contêineres, e arquivos não persistidos podem desaparecer.
+Use `docker compose up -d` na primeira criação ou depois de alterar o Compose; `start` só retoma contêineres existentes.
 
-## Dados e recuperação
+## Persistência
 
-O Compose examinado monta ./volume/data/mssql para os dados do SQL Server e ./volume/data/system_temp para a pasta temporária compartilhada.
+- postgres_data: banco em /var/lib/postgresql/data.
+- protheus_files: árvore /protheus12, incluindo configurações, RPO e dados.
+- license_files: árvore /protheus12 do License Server.
 
-Isso não comprova que todo o estado do Protheus esteja preservado. É necessário mapear RPO customizado, configurações e demais arquivos alterados antes de recriar serviços.
+São volumes Docker, não a pasta ./data do guia inicial. Não execute `docker compose down -v` nem exclua os volumes: isso apaga os dados persistidos. Mantenha fontes no Git separadamente. Backup e restauração completos ainda não foram testados.
 
-Fontes devem ficar sob controle de versão. Bancos e arquivos de execução não devem ser enviados ao GitHub. O procedimento de backup só será considerado pronto depois de um teste de restauração.
+Como o volume completo do Protheus também contém binários, trocar a tag não atualiza automaticamente seus arquivos. Atualizações de release exigem procedimento específico.
 
-## Memória e encerramento
+## Primeiro acesso e REST
 
-- Desativar a abertura automática do Docker Desktop se o laboratório for usado sob demanda.
-- Parar os contêineres ao terminar e encerrar o Docker Desktop.
-- Medir consumo antes de ajustar limites; não há consumo real do Protheus medido ainda.
-- No WSL2, limites globais afetam outras distribuições também.
-- Evitar encerrar todo o WSL indiscriminadamente quando outras tarefas estiverem em execução.
+O AppServer extrai os pacotes antes de iniciar. A configuração remove JOBS=HTTPJOB para não executar o job REST de negócio antes do primeiro acesso orientado; portas REST não são publicadas.
 
-[Docker: backend WSL2](https://docs.docker.com/desktop/features/wsl/) · [Docker: economia de recursos](https://docs.docker.com/desktop/use-desktop/resource-saver/)
-
-## Primeiro acesso
-
-Seguir a orientação recebida para o laboratório: conversar com o responsável técnico antes de abrir o Protheus pela primeira vez. Confirmar criação da Empresa Teste 99, dicionários, menus e acesso para desenvolvimento.
-
-A presença desses recursos na base inicial e a compilação via TDS ainda não foram verificadas.
+Conversar com o responsável técnico antes do primeiro login. Confirmar Empresa 99, dicionários, menus e compilação. Serviços internos de monitoramento podem inicializar recursos do framework; isso não valida as rotinas do ERP.
