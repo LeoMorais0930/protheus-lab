@@ -1,0 +1,31 @@
+# Credenciais e configuracoes locais
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Dados e artefatos do laboratorio
+data/
+volume/
+volumes/
+artifacts/
+backups/
+*.bak
+*.dump
+*.mdf
+*.ndf
+*.ldf
+*.rpo
+*.iso
+*.vhd
+*.vhdx
+*.log
+
+# Ferramentas locais
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
