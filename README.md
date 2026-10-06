@@ -2,6 +2,8 @@
 
 # Protheus Lab
 
+[Português](README.md) · [English](README.en.md)
+
 **Do primeiro ambiente à criação de rotinas: um laboratório de aprendizado em Protheus.**
 
 ADVPL · TLPP · SQL · Docker · WSL2
